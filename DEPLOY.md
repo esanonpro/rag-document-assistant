@@ -66,7 +66,11 @@ Si vous préférez Fly.io :
 
 ## 5. Automatisation (CI/CD)
 
-Le fichier `.github/workflows/ci-cd.yml` est actuellement vide.
-Si vous souhaitez mettre en place un déploiement automatique (par exemple, déployer sur Fly.io à chaque `git push`), nous pouvons configurer ce fichier.
+Le projet utilise un pipeline **GitHub Actions** (`.github/workflows/rag-ci-cd.yml`) pour automatiser les tests et le déploiement :
 
-Dites-moi si vous souhaitez que je configure le pipeline CI/CD !
+- **CI (Intégration Continue) :** À chaque Pull Request ou Push sur `main`, les tests unitaires (`pytest`) et le linting (`flake8`) sont exécutés.
+- **CD (Déploiement Continu) :** À chaque push sur la branche `main`, l'image Docker est construite, poussée sur Google Artifact Registry, et déployée automatiquement sur **Google Cloud Run**.
+
+### Secrets requis sur GitHub :
+- `GCP_SA_KEY` : Clé JSON du compte de service avec les droits `Cloud Run Admin` and `Storage Admin`.
+- `GCP_PROJECT_ID` : L'ID de votre projet Google Cloud.

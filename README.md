@@ -1,8 +1,13 @@
 # 🧬 RAG Science App — Assistant de Recherche Documentaire Intelligent
 
 > [!TIP]
-> **🚀 Déploiement :** Ce projet est conçu pour être hébergé sur Hugging Face Spaces.  
+> **🚀 Déploiement :** Ce projet est configuré pour un déploiement automatisé sur Google Cloud Run via GitHub Actions.  
 > **Interface :** Streamlit
+
+> [!IMPORTANT]
+> **🔒 Confidentialité & Données de Démonstration :**  
+> Pour des raisons de confidentialité, les documents académiques originaux de l'**ENSAI** ne sont pas exposés dans ce dépôt public.  
+> Pour la démonstration et le déploiement public, le système RAG a été alimenté avec un corpus d'**articles scientifiques publics** portant sur la **détection d'anomalies**, permettant ainsi de tester toutes les fonctionnalités de recherche et de citation sans compromettre de données sensibles.
 
 ## 🎯 Contexte métier
 Dans le domaine scientifique, la masse de documents à traiter est colossale. Ce projet vise à offrir aux chercheurs un assistant capable d'extraire des informations pertinentes depuis un corpus de PDFs scientifiques, en fournissant des réponses sourcées et précises.
