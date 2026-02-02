@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+streamlit
+watchdog
+
+langchain-core
+langchain-community
+langchain-huggingface
+langchain-text-splitters
+huggingface_hub
+
+sentence-transformers
+faiss-cpu
+pypdf
