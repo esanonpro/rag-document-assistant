@@ -4,52 +4,31 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from huggingface_hub import snapshot_download
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-# from langchain_huggingface import HuggingFaceEndpoint # On n'utilise plus ça
-
-from typing import Any, List, Optional
-from langchain_core.language_models.llms import LLM
-from langchain_core.callbacks.manager import CallbackManagerForLLMRun
-from huggingface_hub import InferenceClient
+#from langchain_openai import ChatOpenAI
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 
+from langchain_community.llms import Ollama
+
 load_dotenv()
 
 DATA_DIR = Path("data")
-VECTORSTORE_PATH = Path("faiss_index")
 
-# Téléchargement automatique des données depuis le Dataset Hugging Face
-HF_DATASET_ID = os.getenv("HF_DATASET_ID")
-if HF_DATASET_ID:
-    HF_DATASET_ID = HF_DATASET_ID.strip()
-    token = os.getenv("HUGGINGFACEHUB_API_TOKEN")
-    if token:
-        token = token.strip()
-    
-    try:
-        snapshot_download(
-            repo_id=HF_DATASET_ID,
-            repo_type="dataset",
-            local_dir=".",
-            allow_patterns=["data/*", "faiss_index/*"],
-            token=token
-        )
-        print("✅ Données téléchargées avec succès.")
-    except Exception as e:
-        print(f"⚠️ Erreur lors du téléchargement des données : {e}")
+VECTORSTORE_PATH = Path("faiss_index")
 
 EMBEDDING_MODEL_NAME = os.getenv(
     "EMBEDDING_MODEL_NAME",
     "sentence-transformers/all-MiniLM-L6-v2"
 )
+LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "gpt-4o-mini")
+
 
 # --------- 1. Chargement & chunking ---------
 
@@ -115,63 +94,20 @@ def build_or_load_vectorstore(persist_path: Path):
 
     return vectorstore
 
+
 # --------- 3. LLM ---------
 
-from typing import Any, List, Optional
-from langchain_core.language_models.llms import LLM
-from langchain_core.callbacks.manager import CallbackManagerForLLMRun
-from huggingface_hub import InferenceClient
-import traceback
 
-class HFChatLLM(LLM):
+def create_llm(model_name: str = "mistral", temperature: float = 0.2):
     """
-    Wrapper personnalisé pour utiliser l'API 'Chat Completion' de Hugging Face.
-    Cela contourne les erreurs 'Task not supported' de l'API text-generation.
+    Crée un LLM local via Ollama.
+    Exemple de modèles disponibles : mistral, llama3, phi3, codellama, gemma
     """
-    repo_id: str = "HuggingFaceH4/zephyr-7b-beta"
-    token: str = ""
-
-    @property
-    def _llm_type(self) -> str:
-        return "hf_chat_inference"
-
-    def _call(
-        self,
-        prompt: str,
-        stop: Optional[List[str]] = None,
-        run_manager: Optional[CallbackManagerForLLMRun] = None,
-        **kwargs: Any,
-    ) -> str:
-        client = InferenceClient(token=self.token)
-        messages = [{"role": "user", "content": prompt}]
-        
-        try:
-            response = client.chat_completion(
-                messages=messages,
-                model=self.repo_id,
-                max_tokens=512,
-                temperature=0.1,
-                top_p=0.95,
-                stream=False
-            )
-            return response.choices[0].message.content
-        except Exception as e:
-            print(f"❌ ERROR DETAIL: {e}")
-            traceback.print_exc()
-            return f"Erreur lors de la génération : {e}"
-
-def create_llm():
-    """
-    Crée notre LLM personnalisé qui utilise l'API Chat.
-    """
-    token = os.getenv("HUGGINGFACEHUB_API_TOKEN")
-    if token:
-        token = token.strip()
-        
-    return HFChatLLM(token=token)
+    return Ollama(model=model_name, temperature=temperature)
 
 
-# --------- 4. RAG chain ---------
+
+# --------- 4. RAG chain (sans RetrievalQA) ---------
 
 def format_docs(docs):
     """Concatène le contenu des documents pour le passer au LLM."""
@@ -192,28 +128,25 @@ def create_rag_chain(vectorstore=None):
 
     retriever = vectorstore.as_retriever(
         search_type="similarity",
-        search_kwargs={"k": 3},
+        search_kwargs={"k": 5},
     )
 
-    llm = create_llm()
+    llm = create_llm("mistral")
 
-    # On fusionne tout dans un seul prompt utilisateur pour être sûr que le modèle le prenne en compte
-    template = (
-        "Instructions : Tu es un assistant qui répond UNIQUEMENT en utilisant le texte fourni ci-dessous.\n"
-        "Tu ne dois JAMAIS utiliser tes connaissances générales.\n"
-        "Si la réponse n'est pas dans le texte, réponds exactement : 'Je ne trouve pas l'information dans les documents fournis'.\n\n"
-        "Texte de référence :\n{context}\n\n"
-        "Question : {question}\n"
-        "Réponse :"
+    system_template = (
+        "Tu es un assistant de recherche scientifique rigoureux. "
+        "Tu réponds en t'appuyant UNIQUEMENT sur le contexte fourni.\n\n"
+        "Si tu ne trouves pas la réponse dans le contexte, dis explicitement "
+        "\"Je ne sais pas à partir des documents fournis\".\n\n"
+        "Contexte :\n{context}\n"
     )
 
-    prompt = ChatPromptTemplate.from_template(template)
-
-    def clean_output(text: str) -> str:
-        # Nettoyage des balises d'hallucination courantes
-        text = text.split("[/USER]")[0]
-        text = text.split("[/ASS]")[0]
-        return text.strip()
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", system_template),
+            ("human", "Question : {question}\n\nRéponse détaillée :"),
+        ]
+    )
 
     # Chaîne RAG avec LCEL
     rag_chain = (
@@ -224,7 +157,6 @@ def create_rag_chain(vectorstore=None):
         | prompt
         | llm
         | StrOutputParser()
-        | clean_output
     )
 
     return retriever, rag_chain

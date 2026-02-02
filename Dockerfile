@@ -20,10 +20,12 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Copier le code et les données
 COPY app ./app
-# COPY data ./data  <-- Données chargées depuis HF Dataset maintenant
+COPY data ./data
+# Ne pas copier faiss_index, il sera créé au premier démarrage
+# COPY faiss_index ./faiss_index
 
-# Port exposé par l'API (7860 est le standard pour Hugging Face Spaces)
-EXPOSE 7860
+# Port exposé par l'API
+EXPOSE 8000
 
 # Commande de lancement
-CMD ["streamlit", "run", "app/streamlit_app.py", "--server.port=7860", "--server.address=0.0.0.0"]
+CMD ["uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "8000"]

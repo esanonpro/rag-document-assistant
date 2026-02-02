@@ -1,43 +1,56 @@
-# 🧬 RAG Science App — Assistant de Recherche Documentaire Intelligent
-
-> [!TIP]
-> **🚀 Déploiement :** Ce projet est configuré pour un déploiement automatisé sur Google Cloud Run via GitHub Actions.  
-> **Interface :** Streamlit
+# 🧪 RAG Science Assistant — Système de Recherche Documentaire Intelligent
 
 > [!IMPORTANT]
 > **🔒 Confidentialité & Données de Démonstration :**  
 > Pour des raisons de confidentialité, les documents académiques originaux de l'**ENSAI** ne sont pas exposés dans ce dépôt public.  
-> Pour la démonstration et le déploiement public, le système RAG a été alimenté avec un corpus d'**articles scientifiques publics** portant sur la **détection d'anomalies**, permettant ainsi de tester toutes les fonctionnalités de recherche et de citation sans compromettre de données sensibles.
+> Pour la démonstration, le système a été alimenté avec un corpus d'**articles scientifiques publics** portant sur la **détection d'anomalies**, permettant ainsi de tester toutes les fonctionnalités de recherche et de citation sans compromettre de données sensibles.
 
-## 🎯 Contexte métier
-Dans le domaine scientifique, la masse de documents à traiter est colossale. Ce projet vise à offrir aux chercheurs un assistant capable d'extraire des informations pertinentes depuis un corpus de PDFs scientifiques, en fournissant des réponses sourcées et précises.
+## 🎯 Aperçu du Projet
+Ce projet est un assistant de recherche capable d'extraire des informations pertinentes depuis un corpus de documents scientifiques volumineux. Il utilise la technique du **RAG (Retrieval-Augmented Generation)** pour fournir des réponses précises, sourcées et sans hallucinations.
 
-## ❓ Problème à résoudre
-L'IA générative classique (LLM) a tendance à "halluciner" si elle n'a pas accès à un contexte spécifique. Ce projet utilise la technique du **RAG (Retrieval-Augmented Generation)** pour :
-- Garantir que les réponses sont basées uniquement sur des documents réels.
-- Fournir des citations précises pour chaque affirmation.
-- Permettre l'interrogation de documents non inclus dans l'entraînement initial de l'IA.
+### ❓ Pourquoi ce projet ?
+L'IA générative classique (LLM) peut "halluciner" si elle n'a pas accès à un contexte spécifique. Ce système garantit :
+- **Précision** : Les réponses sont basées uniquement sur des documents réels.
+- **Transparence** : Chaque affirmation est accompagnée d'une citation directe de la source (Page, Extrait).
+- **Flexibilité** : Fonctionne avec n'importe quel ensemble de PDFs.
 
-## 🏗️ Architecture & Stack Technique
-Le système repose sur un pipeline moderne d'extraction et de recherche :
-- **Extraction :** Traitement des PDFs via des scripts de parsing spécialisés.
-- **Indexation :** Utilisation de **FAISS** (Vector Store) pour stocker les embeddings.
-- **Modèles :** Mistral (via Hugging Face API) et LangChain pour l'orchestration du RAG.
-- **Interface :** Streamlit pour une expérience utilisateur fluide et interactive.
+## 🛠️ Architecture Technique
+Le système repose sur une stack moderne et performante :
+- **Extraction & Parsing** : Traitement des PDFs via LangChain (`PyPDFLoader`).
+- **Indexation Vectorielle** : Utilisation de **FAISS** (Facebook AI Similarity Search) pour la recherche sémantique ultra-rapide.
+- **Embeddings** : Modèle `all-MiniLM-L6-v2` de HuggingFace (pour une utilisation locale efficace).
+- **Cerveau (LLM)** : **Mistral-7B** via **Ollama** pour une exécution 100% locale et privée.
+- **Interface & API** : **FastAPI** pour une API robuste et documentée (Swagger UI).
 
-## 🚀 Fonctionnalités
-- **RAG Hybride** : Recherche documentaire sémantique combinée à la génération de texte.
-- **Citations des Sources** : Chaque réponse inclut les extraits précis des documents utilisés.
-- **Conteneurisation** : Docker Ready pour un déploiement robuste.
+## 🚀 Installation & Lancement Local
 
-## 🛠️ Instructions Techniques
-### Prérequis
-- Python 3.11
-- Un token Hugging Face (à configurer dans `.env`)
+### 1. Prérequis
+- **Python 3.11+**
+- **Ollama** installé sur votre machine ([ollama.com](https://ollama.com))
 
-### Lancement Local
-1. **Installation** : `pip install -r requirements.txt`
-2. **Exécution** : `streamlit run app/main.py`
-3. **Usage via Docker** : 
-   - `docker build -t rag-science-app .`
-   - `docker run -p 7860:7860 --env-file .env rag-science-app`
+### 2. Configuration d'Ollama
+Téléchargez le modèle Mistral :
+```bash
+ollama pull mistral
+```
+
+### 3. Installation des dépendances
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Lancement de l'API
+Ouvrez un terminal à la racine du projet et lancez :
+```bash
+uvicorn app.api:app --reload
+```
+L'interface Swagger sera alors accessible sur : `http://localhost:8000/docs`.
+
+## 📂 Structure du Projet
+- `app/` : Code source de l'API et du pipeline RAG.
+- `data/` : Dossier contenant les documents PDFs à indexer.
+- `faiss_index/` : Stockage local de l'index vectoriel.
+- `requirements.txt` : Liste des dépendances Python.
+
+## 🤝 Contribution
+Ce projet a été développé dans le cadre d'un portfolio pour démontrer des compétences en **NLP**, **Vector Databases** et **Architecture LLM**.
