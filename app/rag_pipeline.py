@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 #from langchain_openai import ChatOpenAI
 
@@ -15,7 +15,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 
-from langchain_community.llms import Ollama
+from langchain_ollama import OllamaLLM
 
 load_dotenv()
 
@@ -27,14 +27,14 @@ EMBEDDING_MODEL_NAME = os.getenv(
     "EMBEDDING_MODEL_NAME",
     "sentence-transformers/all-MiniLM-L6-v2"
 )
-LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "gpt-4o-mini")
+LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "mistral")
 
 
 # --------- 1. Chargement & chunking ---------
 
 def load_pdfs_from_folder(folder: Path):
     docs = []
-    for pdf_path in folder.glob("*.pdf"):
+    for pdf_path in sorted(folder.glob("*.pdf")):
         loader = PyPDFLoader(str(pdf_path))
         docs.extend(loader.load())
     return docs
@@ -98,12 +98,12 @@ def build_or_load_vectorstore(persist_path: Path):
 # --------- 3. LLM ---------
 
 
-def create_llm(model_name: str = "mistral", temperature: float = 0.2):
+def create_llm(model_name: str = LLM_MODEL_NAME, temperature: float = 0.2, **kwargs):
     """
     Crée un LLM local via Ollama.
     Exemple de modèles disponibles : mistral, llama3, phi3, codellama, gemma
     """
-    return Ollama(model=model_name, temperature=temperature)
+    return OllamaLLM(model=model_name, temperature=temperature, **kwargs)
 
 
 
@@ -131,7 +131,17 @@ def create_rag_chain(vectorstore=None):
         search_kwargs={"k": 5},
     )
 
-    llm = create_llm("mistral")
+    answer_chain = create_answer_chain(create_llm())
+
+    rag_chain = (
+        {"context": retriever | format_docs, "question": RunnablePassthrough()}
+        | answer_chain
+    )
+    return retriever, rag_chain
+
+
+def create_answer_chain(llm):
+    """Generate from explicit contexts so evaluation records the exact LLM input."""
 
     system_template = (
         "Tu es un assistant de recherche scientifique rigoureux. "
@@ -148,15 +158,4 @@ def create_rag_chain(vectorstore=None):
         ]
     )
 
-    # Chaîne RAG avec LCEL
-    rag_chain = (
-        {
-            "context": retriever | format_docs,
-            "question": RunnablePassthrough(),
-        }
-        | prompt
-        | llm
-        | StrOutputParser()
-    )
-
-    return retriever, rag_chain
+    return prompt | llm | StrOutputParser()

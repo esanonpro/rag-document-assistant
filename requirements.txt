@@ -1,16 +1,22 @@
-fastapi
-uvicorn[standard]
-python-dotenv
+fastapi==0.142.2
+uvicorn[standard]==0.54.0
+python-dotenv==1.2.4
 
-langchain-core
-langchain-community
-langchain-openai
-langchain-text-splitters
+langchain-core==1.6.6
+langchain-community==0.3.31
+langchain-openai==1.1.9
+langchain-text-splitters==1.1.2
 
-sentence-transformers
-faiss-cpu
-pypdf
+sentence-transformers==6.1.0
+faiss-cpu==1.15.1
+pypdf==6.19.0
 
 # RAG evaluation
-ragas
-pandas
+ragas==0.4.3
+pandas==3.0.6
+
+# Maintained LangChain integrations
+langchain-huggingface==1.2.2
+langchain-ollama==1.1.0
+socksio==1.0.0
+fonttools==4.66.1

@@ -9,9 +9,9 @@
 Ce projet est un assistant de recherche capable d'extraire des informations pertinentes depuis un corpus de documents scientifiques volumineux. Il utilise la technique du **RAG (Retrieval-Augmented Generation)** pour fournir des réponses ancrées dans le corpus et accompagnées de leurs sources.
 
 ### - Pourquoi ce projet ?
-L'IA générative classique (LLM) peut "halluciner" si elle n'a pas accès à un contexte spécifique. Ce système garantit :
+L'IA générative classique (LLM) peut "halluciner" si elle n'a pas accès à un contexte spécifique. Le système apporte les éléments suivants :
 - **Ancrage documentaire** : le pipeline fournit au modèle des passages récupérés dans le corpus avant la génération.
-- **Transparence** : Chaque affirmation est accompagnée d'une citation directe de la source (Page, Extrait).
+- **Transparence** : Les passages récupérés sont exposés avec leur document, leur page et un extrait ; cela ne prouve pas à lui seul que chaque affirmation est supportée.
 - **Flexibilité** : Fonctionne avec n'importe quel ensemble de PDFs.
 
 ## - Architecture Technique
@@ -41,9 +41,9 @@ L'évaluation repose sur **RAGAS** avec trois dimensions volontairement complém
 
 RAGAS fournit le cadre d'évaluation ; certaines métriques de génération reposent sur une évaluation sémantique de type **LLM-as-a-Judge**. Le juge n'est pas considéré comme une vérité terrain : le modèle évaluateur, le prompt et la configuration doivent être conservés avec les résultats.
 
-### Protocole prévu
+### Protocole reproductible
 
-1. Constituer un petit jeu de questions de référence couvrant plusieurs documents du corpus.
+1. Utiliser les 12 questions de référence vérifiées contre cinq des 11 PDF fournis (documents et pages dans le benchmark).
 2. Associer aux questions les réponses ou contextes de référence nécessaires à l'évaluation.
 3. Exécuter le pipeline avec une configuration figée (chunking, `top_k`, embeddings et LLM).
 4. Calculer **Context Recall**, **Faithfulness** et **Answer Relevancy** avec RAGAS.
@@ -52,10 +52,15 @@ RAGAS fournit le cadre d'évaluation ; certaines métriques de génération repo
 Le script reproductible est disponible dans `evaluation/evaluate_rag.py`. Il génère `evaluation/results.json` à partir d'un jeu de questions/réponses de référence revu manuellement.
 
 ```bash
-python evaluation/evaluate_rag.py
+python -m evaluation.evaluate_rag --corpus data \
+  --rag-model mistral-eval-v03 --judge-model mistral-eval-v03 \
+  --embedding-revision 1110a243fdf4706b3f48f1d95db1a4f5529b4d41 \
+  --output evaluation/rerun
 ```
 
-> **Résultats : non publiés pour le moment.** Le dépôt public ne contient actuellement pas les PDFs du corpus de démonstration ni un jeu de référence annoté permettant de calculer honnêtement ces scores. Aucun score synthétique n'est substitué à une mesure réelle.
+> **Résultats : non publiés pour le moment.** Le benchmark contient désormais 12 entrées revues et sourcées. Les PDF ne sont pas redistribués. Aucun score synthétique ne remplace une mesure réelle.
+
+Le [protocole détaillé](evaluation/README.md) précise l'environnement figé, l'import GGUF dans Ollama, les rôles du générateur et du juge, les traces et les limites de l'évaluation.
 
 ## - Installation & Lancement Local
 

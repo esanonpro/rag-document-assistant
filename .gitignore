@@ -8,3 +8,8 @@ venv/
 # Project specific
 faiss_index/
 data/*.pdf
+
+# Local evaluation weights and reruns (published evaluation artifacts are tracked)
+evaluation/*.gguf
+evaluation/rerun*/
+.venv/

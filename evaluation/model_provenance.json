@@ -1,0 +1,12 @@
+{
+  "model": "Mistral-7B-Instruct-v0.3",
+  "ollama_alias": "mistral-eval-v03",
+  "original_weights": "https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3",
+  "gguf_repository": "https://huggingface.co/bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+  "gguf_revision": "61fd4167fff3ab01ee1cfe0da183fa27a944db48",
+  "gguf_filename": "Mistral-7B-Instruct-v0.3-Q4_K_M.gguf",
+  "gguf_sha256": "1270d22c0fbb3d092fb725d4d96c457b7b687a5f5a715abe1e818da303e562b6",
+  "quantization": "Q4_K_M",
+  "import": "ollama create mistral-eval-v03 -f evaluation/Modelfile",
+  "reason": "Ollama registry model download was unavailable in Work; this GGUF was downloaded from the pinned Hugging Face revision and imported into Ollama. The production default mistral remains unchanged."
+}

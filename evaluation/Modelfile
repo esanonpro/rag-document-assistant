@@ -1,0 +1,5 @@
+# Download and verify the exact GGUF described in model_provenance.json first.
+# Place it in this directory with the basename below.
+FROM ./Mistral-7B-Instruct-v0.3-Q4_K_M.gguf
+PARAMETER num_ctx 8192
+PARAMETER num_batch 128
