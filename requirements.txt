@@ -10,3 +10,7 @@ langchain-text-splitters
 sentence-transformers
 faiss-cpu
 pypdf
+
+# RAG evaluation
+ragas
+pandas
