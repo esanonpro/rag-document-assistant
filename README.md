@@ -49,7 +49,13 @@ RAGAS fournit le cadre d'évaluation ; certaines métriques de génération repo
 4. Calculer **Context Recall**, **Faithfulness** et **Answer Relevancy** avec RAGAS.
 5. Conserver la configuration avec les scores pour rendre les comparaisons reproductibles.
 
-> **Résultats : à compléter après constitution et annotation du jeu d'évaluation.**
+Le script reproductible est disponible dans `evaluation/evaluate_rag.py`. Il génère `evaluation/results.json` à partir d'un jeu de questions/réponses de référence revu manuellement.
+
+```bash
+python evaluation/evaluate_rag.py
+```
+
+> **Résultats : non publiés pour le moment.** Le dépôt public ne contient actuellement pas les PDFs du corpus de démonstration ni un jeu de référence annoté permettant de calculer honnêtement ces scores. Aucun score synthétique n'est substitué à une mesure réelle.
 
 ## - Installation & Lancement Local
 
