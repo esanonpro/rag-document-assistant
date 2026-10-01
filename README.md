@@ -25,32 +25,29 @@ Le système repose sur une stack moderne et performante :
 
 ## - Évaluation du système RAG
 
-L'évaluation est pensée en deux niveaux complémentaires afin de distinguer la qualité du **retrieval** de celle de la **réponse générée**. Les scores ne sont pas publiés tant qu'un jeu de questions de référence annoté n'a pas été constitué.
+L'évaluation repose sur **RAGAS** avec trois dimensions volontairement complémentaires. L'objectif est de couvrir les trois points critiques du pipeline sans multiplier les métriques redondantes.
 
-### 1. Évaluation du retrieval
+| Dimension | Métrique | Question évaluée |
+| --- | --- | --- |
+| Retrieval | **Context Recall** | Le retriever fournit-il au LLM les informations nécessaires pour répondre ? |
+| Ancrage | **Faithfulness** | Les affirmations générées sont-elles supportées par le contexte récupéré ? |
+| Réponse | **Answer Relevancy** | La réponse traite-t-elle réellement la question posée ? |
 
-À partir d'un jeu de questions pour lesquelles les documents ou passages pertinents sont connus :
+### Pourquoi ces trois métriques ?
 
-- **Recall@k** : proportion de questions pour lesquelles au moins un passage pertinent apparaît dans les `k` premiers résultats.
-- **Precision@k** : proportion de passages pertinents parmi les `k` passages retournés.
-- **MRR (Mean Reciprocal Rank)** : mesure la position du premier passage pertinent ; elle pénalise un document pertinent retrouvé trop bas dans le classement.
-- **Hit Rate@k** : proportion de requêtes ayant au moins un document pertinent dans le top-k.
+- **Context Recall** est prioritaire sur des métriques de ranking comme MRR : dans ce RAG, les passages du top-k sont transmis automatiquement au LLM ; l'enjeu principal est donc que l'information nécessaire soit présente dans le contexte.
+- **Faithfulness** mesure un risque propre aux systèmes génératifs : produire une affirmation qui n'est pas supportée par les documents récupérés.
+- **Answer Relevancy** complète la faithfulness : une réponse peut être fidèle au contexte tout en étant peu pertinente pour la question.
 
-Ces métriques permettent notamment de comparer les choix de chunking, la valeur de `k`, le modèle d'embeddings et la configuration de l'index FAISS.
+RAGAS fournit le cadre d'évaluation ; certaines métriques de génération reposent sur une évaluation sémantique de type **LLM-as-a-Judge**. Le juge n'est pas considéré comme une vérité terrain : le modèle évaluateur, le prompt et la configuration doivent être conservés avec les résultats.
 
-### 2. Évaluation de la génération
+### Protocole prévu
 
-Sur un ensemble de questions/réponses de référence :
-
-- **Faithfulness / groundedness** : vérifie si les affirmations de la réponse sont effectivement supportées par le contexte récupéré.
-- **Answer relevance** : mesure dans quelle mesure la réponse traite directement la question posée.
-- **Context relevance** : évalue si les passages transmis au LLM sont utiles pour répondre à la question.
-- **Exact Match / F1** : utilisables lorsque les questions disposent d'une réponse de référence suffisamment courte et non ambiguë.
-- **Évaluation humaine** : contrôle complémentaire de la justesse, de la qualité des citations et de l'utilité de la réponse.
-
-### 3. Protocole
-
-Le protocole cible un jeu de questions annotées couvrant plusieurs articles et plusieurs niveaux de difficulté. Les résultats seront reportés avec la configuration évaluée (chunking, `top_k`, embeddings et LLM) afin de rendre les comparaisons reproductibles.
+1. Constituer un petit jeu de questions de référence couvrant plusieurs documents du corpus.
+2. Associer aux questions les réponses ou contextes de référence nécessaires à l'évaluation.
+3. Exécuter le pipeline avec une configuration figée (chunking, `top_k`, embeddings et LLM).
+4. Calculer **Context Recall**, **Faithfulness** et **Answer Relevancy** avec RAGAS.
+5. Conserver la configuration avec les scores pour rendre les comparaisons reproductibles.
 
 > **Résultats : à compléter après constitution et annotation du jeu d'évaluation.**
 
